@@ -1,0 +1,16 @@
+# Configuração local — contém dados sensíveis (IP, chave SSH, usuário)
+vd_stats/config.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# Sistema
+.DS_Store
