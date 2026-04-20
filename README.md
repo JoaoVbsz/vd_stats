@@ -1,8 +1,8 @@
 # vd_stats
 
-A terminal dashboard for monitoring Docker containers on a remote VPS via SSH.
+Um dashboard de terminal para monitorar containers Docker em uma VPS remota via SSH.
 
-Displays all containers grouped by project folder, with real-time CPU usage, memory (in GB), and disk usage per project — all from your local machine, no agent needed on the server.
+Exibe todos os containers agrupados pela pasta do projeto, com uso de CPU em tempo real, memória (em GB) e uso de disco por projeto — tudo a partir da sua máquina local, sem necessidade de agentes no servidor.
 
 ```
 ╭─────────────────────────────────────────────────╮
@@ -20,79 +20,79 @@ Displays all containers grouped by project folder, with real-time CPU usage, mem
     app-redis                1.24%    0.004 GB
     app-beat                 ✗ Down   (exited)
 ╭─────────────────────────────────────────────────╮
-│ Ctrl+C / Ctrl+D to exit   ↑↓ to scroll         │
+│ Ctrl+C / Ctrl+D para sair  ↑↓ para rolar       │
 ╰─────────────────────────────────────────────────╯
 ```
 
-**Features**
-- Groups containers by their `docker-compose` project folder
-- Shows CPU, memory (GB), and disk usage per project
-- Color-coded CPU: green < 5%, yellow 5–20%, red > 20%
-- Containers that are down appear in red with their status
-- Auto-refresh every 2 seconds
-- Scroll when content exceeds terminal height (↑↓ arrow keys)
-- Exit with `Ctrl+C` or `Ctrl+D`
+**Recursos**
+- Agrupa containers pela pasta do projeto `docker-compose`
+- Mostra uso de CPU, memória (GB) e disco por projeto
+- CPU codificada por cores: verde < 5%, amarelo 5–20%, vermelho > 20%
+- Containers que estão fora do ar aparecem em vermelho com seu status
+- Atualização automática a cada 2 segundos
+- Rolagem quando o conteúdo excede a altura do terminal (setas ↑↓)
+- Sair com `Ctrl+C` ou `Ctrl+D`
 
 ---
 
-## Requirements
+## Requisitos
 
 - Python 3.8+
-- SSH key-based access to your VPS (password auth is not supported)
-- Docker running on the VPS (no setup needed on the server side)
+- Acesso via chave SSH à sua VPS (autenticação por senha não é suportada)
+- Docker rodando na VPS (nenhuma configuração necessária no lado do servidor)
 
 ---
 
-## Installation
+## Instalação
 
 ### Linux / macOS
 
-**1. Clone the repository**
+**1. Clone o repositório**
 
 ```bash
-git clone https://github.com/your-username/vd-stats.git
+git clone https://github.com/seu-usuario/vd-stats.git
 cd vd-stats
 ```
 
-**2. Configure your VPS connection**
+**2. Configure sua conexão VPS**
 
 ```bash
 cp vd_stats/config.example.py vd_stats/config.py
 ```
 
-Edit `vd_stats/config.py` with your values:
+Edite `vd_stats/config.py` com seus valores:
 
 ```python
-SSH_HOST = "your-vps-ip"
+SSH_HOST = "ip-da-sua-vps"
 SSH_USER = "root"
-SSH_KEY_PATH = "~/.ssh/id_rsa"   # path to your private key
+SSH_KEY_PATH = "~/.ssh/id_rsa"   # caminho para sua chave privada
 SSH_PORT = 22
-REFRESH_INTERVAL = 2             # seconds between refreshes
+REFRESH_INTERVAL = 2             # segundos entre as atualizações
 ```
 
-**3. Run the installer**
+**3. Execute o instalador**
 
 ```bash
 bash install.sh
 ```
 
-This creates a virtual environment at `~/.venvs/vd_stats` and registers the `vd_stats` command in `~/.local/bin`.
+Isso cria um ambiente virtual em `~/.venvs/vd_stats` e registra o comando `vd_stats` em `~/.local/bin`.
 
-**4. Make sure `~/.local/bin` is in your PATH**
+**4. Certifique-se de que `~/.local/bin` esteja no seu PATH**
 
-Check with:
+Verifique com:
 ```bash
-echo $PATH | grep -q ".local/bin" && echo "ok" || echo "add to PATH"
+echo $PATH | grep -q ".local/bin" && echo "ok" || echo "adicione ao PATH"
 ```
 
-If it is not there, add to your `~/.bashrc` or `~/.zshrc`:
+Se não estiver lá, adicione ao seu `~/.bashrc` ou `~/.zshrc`:
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Then reload: `source ~/.bashrc`
+Depois recarregue: `source ~/.bashrc`
 
-**5. Run**
+**5. Executar**
 
 ```bash
 vd_stats
@@ -102,53 +102,53 @@ vd_stats
 
 ### Windows (via WSL)
 
-The scroll feature relies on `tty` and `termios`, which are Unix-only modules. Native Windows terminals are not supported. The recommended approach is **WSL (Windows Subsystem for Linux)**.
+O recurso de rolagem depende de `tty` e `termios`, que são módulos exclusivos para Unix. Terminais nativos do Windows não são suportados. A abordagem recomendada é o **WSL (Windows Subsystem for Linux)**.
 
-**1. Enable WSL** (if not already enabled)
+**1. Habilite o WSL** (se ainda não estiver habilitado)
 
-Open PowerShell as Administrator and run:
+Abra o PowerShell como Administrador e execute:
 ```powershell
 wsl --install
 ```
 
-Restart your machine when prompted.
+Reinicie sua máquina quando solicitado.
 
-**2. Open a WSL terminal and follow the Linux instructions above**
+**2. Abra um terminal WSL e siga as instruções do Linux acima**
 
-All steps are identical inside WSL. Your SSH keys from Windows are accessible at `/mnt/c/Users/YourName/.ssh/`.
+Todos os passos são idênticos dentro do WSL. Suas chaves SSH do Windows estão acessíveis em `/mnt/c/Users/SeuNome/.ssh/`.
 
-You can point `SSH_KEY_PATH` to:
+Você pode apontar o `SSH_KEY_PATH` para:
 ```python
-SSH_KEY_PATH = "/mnt/c/Users/YourName/.ssh/id_rsa"
+SSH_KEY_PATH = "/mnt/c/Users/SeuNome/.ssh/id_rsa"
 ```
 
 ---
 
-## Configuration reference
+## Referência de configuração
 
-| Variable | Description | Default |
+| Variável | Descrição | Padrão |
 |---|---|---|
-| `SSH_HOST` | IP or hostname of your VPS | — |
-| `SSH_USER` | SSH username | `root` |
-| `SSH_KEY_PATH` | Path to your private SSH key | `~/.ssh/id_rsa` |
-| `SSH_PORT` | SSH port | `22` |
-| `REFRESH_INTERVAL` | Seconds between data refreshes | `2` |
+| `SSH_HOST` | IP ou hostname da sua VPS | — |
+| `SSH_USER` | Usuário SSH | `root` |
+| `SSH_KEY_PATH` | Caminho para sua chave SSH privada | `~/.ssh/id_rsa` |
+| `SSH_PORT` | Porta SSH | `22` |
+| `REFRESH_INTERVAL` | Segundos entre as atualizações de dados | `2` |
 
 ---
 
-## How it works
+## Como funciona
 
-1. Connects to the VPS via SSH using [paramiko](https://www.paramiko.org/)
-2. Runs `docker ps -a` and `docker inspect` to collect container names, statuses, and their project folders (via the `com.docker.compose.project.working_dir` label set by Docker Compose)
-3. Runs `docker stats --no-stream` to get live CPU and memory per running container
-4. Runs `du -sh` on each project folder for disk usage
-5. Groups everything by folder and renders the dashboard using [rich](https://github.com/Textualize/rich)
+1. Conecta-se à VPS via SSH usando [paramiko](https://www.paramiko.org/)
+2. Executa `docker ps -a` e `docker inspect` para coletar nomes de containers, status e suas pastas de projeto (através da label `com.docker.compose.project.working_dir` definida pelo Docker Compose)
+3. Executa `docker stats --no-stream` para obter CPU e memória em tempo real por container em execução
+4. Executa `du -sh` em cada pasta de projeto para uso de disco
+5. Agrupa tudo por pasta e renderiza o dashboard usando [rich](https://github.com/Textualize/rich)
 
-Containers not managed by Docker Compose (no project label) appear under a group called **Outros**.
+Containers não gerenciados pelo Docker Compose (sem label de projeto) aparecem sob um grupo chamado **Outros**.
 
 ---
 
-## Updating
+## Atualizando
 
 ```bash
 cd vd-stats
@@ -158,6 +158,6 @@ bash install.sh
 
 ---
 
-## License
+## Licença
 
 MIT
