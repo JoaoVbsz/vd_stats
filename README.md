@@ -1,7 +1,5 @@
 # vd_stats
 
-Um dashboard de terminal para monitorar containers Docker em uma VPS remota via SSH.
-
 Exibe todos os containers agrupados pela pasta do projeto, com uso de CPU em tempo real, memória (em GB) e uso de disco por projeto — tudo a partir da sua máquina local, sem necessidade de agentes no servidor.
 
 ```
