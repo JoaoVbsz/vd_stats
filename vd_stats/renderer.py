@@ -36,16 +36,33 @@ def _format_gb(mem_str: Optional[str]) -> str:
     return f"{bytes_val / 1e9:.3f} GB"
 
 
-def _cpu_style(cpu_str: Optional[str]) -> str:
+def _parse_cpu_pct(cpu_str: Optional[str]) -> float:
     try:
-        val = float((cpu_str or "0").rstrip("%"))
-        if val >= 20:
-            return "bold red"
-        if val >= 5:
-            return "yellow"
-        return "green"
+        return float((cpu_str or "0").rstrip("%"))
     except ValueError:
-        return "white"
+        return 0.0
+
+
+def _format_cpu(cpu_str: Optional[str], cpu_limit: float) -> str:
+    raw_pct = _parse_cpu_pct(cpu_str)
+    used = raw_pct / 100.0
+    if cpu_limit > 0:
+        pct_of_limit = raw_pct / (cpu_limit * 100) * 100
+        return f"{used:.2f}/{cpu_limit:.1f}CPU ({pct_of_limit:.0f}%)"
+    return cpu_str or "—"
+
+
+def _cpu_style(cpu_str: Optional[str], cpu_limit: float = 0.0) -> str:
+    raw_pct = _parse_cpu_pct(cpu_str)
+    if cpu_limit > 0:
+        check = raw_pct / (cpu_limit * 100) * 100
+    else:
+        check = raw_pct
+    if check >= 80:
+        return "bold red"
+    if check >= 50:
+        return "yellow"
+    return "green"
 
 
 class Renderer:
@@ -121,7 +138,7 @@ class Renderer:
             padding=(0, 1),
         )
         table.add_column("Container", no_wrap=True, min_width=30)
-        table.add_column("CPU", justify="right", width=8)
+        table.add_column("CPU", justify="right", width=22)
         table.add_column("Memória", justify="right", width=12)
         table.add_column("Disco", justify="right", width=10)
 
@@ -137,9 +154,10 @@ class Renderer:
             else:
                 c = data
                 if c["status"] == "running":
+                    cpu_limit = c.get("cpu_limit", 0.0)
                     table.add_row(
                         Text(f"   {c['name']}", style="white"),
-                        Text(c["cpu"] or "—", style=_cpu_style(c["cpu"])),
+                        Text(_format_cpu(c["cpu"], cpu_limit), style=_cpu_style(c["cpu"], cpu_limit)),
                         Text(_format_gb(c["mem"]), style="cyan"),
                         Text(""),
                     )

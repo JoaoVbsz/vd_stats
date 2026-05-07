@@ -10,6 +10,7 @@ def group_by_project(containers):
             "status": c["status"],
             "cpu": c["cpu"],
             "mem": c["mem"],
+            "cpu_limit": c.get("cpu_limit", 0.0),
         })
 
     # Named projects sorted alphabetically, "Outros" always last
