@@ -3,11 +3,12 @@ def fetch_containers(ssh):
     if not ids_out:
         return []
 
-    # Inspect all containers: full_id | name | status | working_dir
+    # Inspect all containers: full_id | name | status | working_dir | NanoCpus
     inspect_cmd = (
         "docker inspect $(docker ps -aq) "
         "--format '{{.Id}}|{{.Name}}|{{.State.Status}}"
-        "|{{index .Config.Labels \"com.docker.compose.project.working_dir\"}}'"
+        "|{{index .Config.Labels \"com.docker.compose.project.working_dir\"}}"
+        "|{{.HostConfig.NanoCpus}}'"
         " 2>/dev/null"
     )
     inspect_out, _ = ssh.run(inspect_cmd)
@@ -31,14 +32,20 @@ def fetch_containers(ssh):
 
     containers = []
     for line in inspect_out.splitlines():
-        parts = line.split("|", 3)
+        parts = line.split("|", 4)
         if len(parts) < 4:
             continue
 
-        full_id, name, status, working_dir = parts
+        full_id, name, status, working_dir = parts[0], parts[1], parts[2], parts[3]
+        nano_cpus_str = parts[4] if len(parts) > 4 else "0"
         short_id = full_id[:12]
         name = name.lstrip("/").strip()
         working_dir = working_dir.strip() or None
+
+        try:
+            cpu_limit = int(nano_cpus_str.strip() or 0) / 1e9
+        except ValueError:
+            cpu_limit = 0.0
 
         stat = stats_map.get(short_id, {})
         containers.append({
@@ -47,6 +54,7 @@ def fetch_containers(ssh):
             "status": status.strip(),
             "cpu": stat.get("cpu"),
             "mem": stat.get("mem"),
+            "cpu_limit": cpu_limit,
             "working_dir": working_dir,
         })
 
