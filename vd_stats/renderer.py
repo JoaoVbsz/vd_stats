@@ -44,12 +44,14 @@ def _parse_cpu_pct(cpu_str: Optional[str]) -> float:
 
 
 def _format_cpu(cpu_str: Optional[str], cpu_limit: float) -> str:
+    if cpu_str is None:
+        return "—"
     raw_pct = _parse_cpu_pct(cpu_str)
-    used = raw_pct / 100.0
     if cpu_limit > 0:
+        used = raw_pct / 100.0
         pct_of_limit = raw_pct / (cpu_limit * 100) * 100
         return f"{used:.2f}/{cpu_limit:.1f}CPU ({pct_of_limit:.0f}%)"
-    return cpu_str or "—"
+    return f"{int(round(raw_pct))}%"
 
 
 def _cpu_style(cpu_str: Optional[str], cpu_limit: float = 0.0) -> str:
