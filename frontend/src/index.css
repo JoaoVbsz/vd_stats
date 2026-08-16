@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vd-900: #050505;
+  --color-vd-800: #0a0a0a;
+  --color-vd-700: #141414;
+  --color-vd-yellow: #f59e0b;
+  --color-vd-green: #10b981;
+  --color-vd-text: #e5e5e5;
+  --color-vd-textMuted: #737373;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-vd-900);
+    color: var(--color-vd-text);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Efeito Premium Glassmorphism (Profundidade e Reflexo) */
+.glass-panel {
+  background: linear-gradient(165deg, rgba(26, 27, 30, 0.7) 0%, rgba(12, 12, 14, 0.9) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.03);
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+/* Glows Neon de Textos */
+.text-glow-green {
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.text-glow-yellow {
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Scrollbar Customizada Invisível Premium */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
