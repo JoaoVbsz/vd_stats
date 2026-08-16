@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/joaov/vd_stats/internal/api"
 	"github.com/joaov/vd_stats/internal/database"
 	"github.com/joaov/vd_stats/internal/ssh"
@@ -13,6 +14,8 @@ import (
 
 func main() {
 	log.Println("Iniciando motor vd_stats...")
+
+	_ = godotenv.Load("../.env", ".env")
 
 	err := database.Connect()
 	if err != nil {
