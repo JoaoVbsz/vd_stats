@@ -64,6 +64,7 @@ func StartServer(port string) {
 		database.DB.Raw(`
 			SELECT DISTINCT ON (server_id) *
 			FROM metric_servers
+			WHERE timestamp >= NOW() - INTERVAL '30 seconds'
 			ORDER BY server_id, timestamp DESC
 		`).Scan(&lastServerMetrics)
 
@@ -75,25 +76,28 @@ func StartServer(port string) {
 		var res LiveResponse
 		
 		for _, s := range servers {
-			lastSrv := serverMetricsMap[s.ID]
-			res.Servers = append(res.Servers, ServerLiveStat{
-				ID:            s.ID,
-				HostIP:        s.HostIP,
-				Name:          s.Name,
-				Uptime:        lastSrv.UptimeSeconds,
-				DiskUsed:      lastSrv.DiskUsedBytes,
-				DiskTotal:     lastSrv.DiskTotalBytes,
-				PingLatencyMs: lastSrv.PingLatencyMs,
-			})
+			lastSrv, ok := serverMetricsMap[s.ID]
+			if ok || s.Name == "Load Balancer" {
+				res.Servers = append(res.Servers, ServerLiveStat{
+					ID:            s.ID,
+					HostIP:        s.HostIP,
+					Name:          s.Name,
+					Uptime:        lastSrv.UptimeSeconds,
+					DiskUsed:      lastSrv.DiskUsedBytes,
+					DiskTotal:     lastSrv.DiskTotalBytes,
+					PingLatencyMs: lastSrv.PingLatencyMs,
+				})
+			}
 		}
 
 		var containers []database.Container
-		database.DB.Find(&containers)
+		database.DB.Order("name ASC").Find(&containers)
 
 		var lastContainerMetrics []database.MetricContainer
 		database.DB.Raw(`
 			SELECT DISTINCT ON (container_id) *
 			FROM metric_containers
+			WHERE timestamp >= NOW() - INTERVAL '30 seconds'
 			ORDER BY container_id, timestamp DESC
 		`).Scan(&lastContainerMetrics)
 

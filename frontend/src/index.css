@@ -20,7 +20,6 @@
   }
 }
 
-/* Efeito Premium Glassmorphism (Profundidade e Reflexo) */
 .glass-panel {
   background: linear-gradient(165deg, rgba(26, 27, 30, 0.7) 0%, rgba(12, 12, 14, 0.9) 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -31,7 +30,6 @@
   backdrop-filter: blur(12px);
 }
 
-/* Glows Neon de Textos */
 .text-glow-green {
   text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
@@ -44,7 +42,6 @@
   text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
 }
 
-/* Scrollbar Customizada Invisível Premium */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
