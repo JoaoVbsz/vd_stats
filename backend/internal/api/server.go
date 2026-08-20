@@ -60,31 +60,55 @@ func StartServer(port string) {
 		var servers []database.Server
 		database.DB.Find(&servers)
 
+		var lastServerMetrics []database.MetricServer
+		database.DB.Raw(`
+			SELECT DISTINCT ON (server_id) *
+			FROM metric_servers
+			WHERE timestamp >= NOW() - INTERVAL '30 seconds'
+			ORDER BY server_id, timestamp DESC
+		`).Scan(&lastServerMetrics)
+
+		serverMetricsMap := make(map[string]database.MetricServer)
+		for _, m := range lastServerMetrics {
+			serverMetricsMap[m.ServerID] = m
+		}
+
 		var res LiveResponse
 		
 		for _, s := range servers {
-			var lastSrv database.MetricServer
-			database.DB.Where("server_id = ?", s.ID).Order("timestamp desc").First(&lastSrv)
-			
-			res.Servers = append(res.Servers, ServerLiveStat{
-				ID:            s.ID,
-				HostIP:        s.HostIP,
-				Name:          s.Name,
-				Uptime:        lastSrv.UptimeSeconds,
-				DiskUsed:      lastSrv.DiskUsedBytes,
-				DiskTotal:     lastSrv.DiskTotalBytes,
-				PingLatencyMs: lastSrv.PingLatencyMs,
-			})
+			lastSrv, ok := serverMetricsMap[s.ID]
+			if ok || s.Name == "Load Balancer" {
+				res.Servers = append(res.Servers, ServerLiveStat{
+					ID:            s.ID,
+					HostIP:        s.HostIP,
+					Name:          s.Name,
+					Uptime:        lastSrv.UptimeSeconds,
+					DiskUsed:      lastSrv.DiskUsedBytes,
+					DiskTotal:     lastSrv.DiskTotalBytes,
+					PingLatencyMs: lastSrv.PingLatencyMs,
+				})
+			}
 		}
 
 		var containers []database.Container
-		database.DB.Find(&containers)
+		database.DB.Order("name ASC").Find(&containers)
+
+		var lastContainerMetrics []database.MetricContainer
+		database.DB.Raw(`
+			SELECT DISTINCT ON (container_id) *
+			FROM metric_containers
+			WHERE timestamp >= NOW() - INTERVAL '30 seconds'
+			ORDER BY container_id, timestamp DESC
+		`).Scan(&lastContainerMetrics)
+
+		containerMetricsMap := make(map[string]database.MetricContainer)
+		for _, m := range lastContainerMetrics {
+			containerMetricsMap[m.ContainerID] = m
+		}
 
 		for _, c := range containers {
-			var lastMetric database.MetricContainer
-			dbRes := database.DB.Where("container_id = ?", c.ID).Order("timestamp desc").First(&lastMetric)
-			
-			if dbRes.Error == nil {
+			lastMetric, ok := containerMetricsMap[c.ID]
+			if ok {
 				res.Containers = append(res.Containers, ContainerLiveStat{
 					ServerID: c.ServerID,
 					DockerID: c.DockerID,
