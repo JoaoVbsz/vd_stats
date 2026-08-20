@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joaov/vd_stats/internal/database"
+	"github.com/joaov/vd_stats/internal/ssh"
 )
 
 type ContainerLiveStat struct {
@@ -40,13 +42,20 @@ type LiveResponse struct {
 	LoadBalancing []LbStat            `json:"load_balancing"`
 }
 
+type ServerCreateRequest struct {
+	HostIP string `json:"host_ip"`
+	Name   string `json:"name"`
+	User   string `json:"user"`
+}
+
 func StartServer(port string) {
 	mux := http.NewServeMux()
 
 	withCORS := func(h http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 			w.Header().Set("Content-Type", "application/json")
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)
@@ -55,6 +64,51 @@ func StartServer(port string) {
 			h(w, r)
 		}
 	}
+
+	mux.HandleFunc("/api/servers", withCORS(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			var servers []database.Server
+			database.DB.Find(&servers)
+			json.NewEncoder(w).Encode(servers)
+			return
+		}
+
+		if r.Method == "POST" {
+			var req ServerCreateRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			if req.User == "" {
+				req.User = "root"
+			}
+			var server database.Server
+			database.DB.FirstOrCreate(&server, database.Server{
+				HostIP: req.HostIP,
+				Name:   req.Name,
+				User:   req.User,
+			})
+			sshKey := os.Getenv("SSH_KEY_PATH")
+			ssh.Manager.Start(server.ID, server.HostIP, server.User, sshKey)
+			json.NewEncoder(w).Encode(server)
+			return
+		}
+
+		if r.Method == "DELETE" {
+			id := r.URL.Query().Get("id")
+			if id == "" {
+				http.Error(w, "ID required", http.StatusBadRequest)
+				return
+			}
+			ssh.Manager.Stop(id)
+			database.DB.Where("id = ?", id).Delete(&database.Server{})
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
+			return
+		}
+
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}))
 
 	mux.HandleFunc("/api/metrics/live", withCORS(func(w http.ResponseWriter, r *http.Request) {
 		var servers []database.Server
@@ -74,7 +128,6 @@ func StartServer(port string) {
 		}
 
 		var res LiveResponse
-		
 		for _, s := range servers {
 			lastSrv, ok := serverMetricsMap[s.ID]
 			if ok || s.Name == "Load Balancer" {
@@ -86,6 +139,14 @@ func StartServer(port string) {
 					DiskUsed:      lastSrv.DiskUsedBytes,
 					DiskTotal:     lastSrv.DiskTotalBytes,
 					PingLatencyMs: lastSrv.PingLatencyMs,
+				})
+			} else {
+				// Show servers even if they don't have recent metrics (so they appear in the UI)
+				res.Servers = append(res.Servers, ServerLiveStat{
+					ID:            s.ID,
+					HostIP:        s.HostIP,
+					Name:          s.Name,
+					Uptime:        0,
 				})
 			}
 		}
